@@ -1,0 +1,60 @@
+#!/bin/bash
+#SBATCH -D ./  # Set the working directory
+#SBATCH --mail-user=bakerj@tcnj.edu       # Who to send emails to
+#SBATCH --mail-type=ALL                  # Send emails on start, end and failure
+#SBATCH --job-name=t4p-25.4              # Name to show in the job queue
+#SBATCH --ntasks=1                      # Total number of mpi tasks requested
+#SBATCH --nodes=1                        # Total number of nodes requested
+#SBATCH --gres=gpu:1                     # Include GPU generic resource
+#SBATCH --partition=gpu                  # Partition (a.k.a. queue) to use
+#SBATCH --account=bakerlab
+
+module load amber
+
+#In case there are problems capture some info about the run environpat
+hostname
+which mpirun
+echo $PATH
+echo $LD_LIBRARY_PATH
+echo '------------------------------------------------------------------------'
+echo "Starting @ `date`"
+
+echo "Starting heating 1 @ `date`"
+#heating 1
+pmemd.cuda -O -i 3-simulation/2-heat/heat.1.in -p 2-tleap/sys.parm7 -c 3-simulation/1-min/min.rst7 -o 3-simulation/2-heat/heat.1.out -r 3-simulation/2-heat/heat.1.rst7 -ref 3-simulation/1-min/min.rst7 -x 3-simulation/2-heat/heat.1.nc
+echo "Heating 1 all done @ `date`"
+
+echo "Starting heating 2 @ `date`"
+#heating 2
+pmemd.cuda -O -i 3-simulation/2-heat/heat.2.in -p 2-tleap/sys.parm7 -c 3-simulation/2-heat/heat.1.rst7 -o 3-simulation/2-heat/heat.2.out -r 3-simulation/2-heat/heat.2.rst7 -ref 3-simulation/2-heat/heat.1.rst7 -x 3-simulation/2-heat/heat.2.nc
+echo "Heating 2 all done @ `date`"
+
+
+#Equilibration 
+echo "Starting equil 1 @ `date`"
+pmemd.cuda -O -i 3-simulation/3-equil/equil.1.in -o 3-simulation/3-equil/equil.1.out -p 2-tleap/sys.parm7 -c 3-simulation/2-heat/heat.2.rst7 -r 3-simulation/3-equil/equil.1.rst7 -ref 3-simulation/2-heat/heat.2.rst7 -x 3-simulation/3-equil/equil.1.nc
+echo "Equil 1 all done @ `date`"
+
+echo "Starting equil 2 @ `date`"
+pmemd.cuda -O -i 3-simulation/3-equil/equil.2.in -o 3-simulation/3-equil/equil.2.out -p 2-tleap/sys.parm7 -c 3-simulation/3-equil/equil.1.rst7 -r 3-simulation/3-equil/equil.2.rst7 -ref 3-simulation/3-equil/equil.1.rst7 -x 3-simulation/3-equil/equil.2.nc
+echo "Equil 2 all done @ `date`"
+
+echo "Starting equil 3 @ `date`"
+pmemd.cuda -O -i 3-simulation/3-equil/equil.3.in -o 3-simulation/3-equil/equil.3.out -p 2-tleap/sys.parm7 -c 3-simulation/3-equil/equil.2.rst7 -r 3-simulation/3-equil/equil.3.rst7 -ref 3-simulation/3-equil/equil.2.rst7 -x 3-simulation/3-equil/equil.3.nc
+echo "Equil 3 all done @ `date`"
+
+echo "Starting equil 4 @ `date`"
+pmemd.cuda -O -i 3-simulation/3-equil/equil.4.in -o 3-simulation/3-equil/equil.4.out -p 2-tleap/sys.parm7 -c 3-simulation/3-equil/equil.3.rst7 -r 3-simulation/3-equil/equil.4.rst7 -ref 3-simulation/3-equil/equil.3.rst7 -x 3-simulation/3-equil/equil.4.nc
+echo "Equil 4 all done @ `date`"
+
+echo "Starting equil 5 @ `date`"
+pmemd.cuda -O -i 3-simulation/3-equil/equil.5.in -o 3-simulation/3-equil/equil.5.out -p 2-tleap/sys.parm7 -c 3-simulation/3-equil/equil.4.rst7 -r 3-simulation/3-equil/equil.5.rst7 -ref 3-simulation/3-equil/equil.4.rst7 -x 3-simulation/3-equil/equil.5.nc
+echo "Equil 5 all done @ `date`"
+
+echo "Starting equil 6 @ `date`"
+pmemd.cuda -O -i 3-simulation/3-equil/equil.6.in -o 3-simulation/3-equil/equil.6.out -p 2-tleap/sys.parm7 -c 3-simulation/3-equil/equil.5.rst7 -r 3-simulation/3-equil/equil.6.rst7 -ref 3-simulation/3-equil/equil.5.rst7 -x 3-simulation/3-equil/equil.6.nc
+echo "Equil 6 all done @ `date`"
+
+cp 3-simulation/3-equil/equil.6.rst7 3-simulation/4-prod/prod.0.rst7
+
+echo "All done @ `date`"
